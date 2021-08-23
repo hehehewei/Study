@@ -1,10 +1,10 @@
-## Linq学习
+# Linq学习
 
-### 什么是Linq
+## 什么是Linq
 
 ​	[微软官方文档](https://docs.microsoft.com/zh-cn/dotnet/csharp/programming-guide/concepts/linq/)
 
-### 查询操作的三个步骤
+## 查询操作的三个步骤
 
 1. #### 获取数据源
 
@@ -63,13 +63,13 @@ class Linq_Prac
    选择集合中的第一个元素
 
    ```csharp
-   var firstNum = numbers.First() 
+   var firstNum = numbers.First();
    ```
 
    选择集合中第一个>5的元素
 
    ```csharp
-   var firstNum = numbers.First(n => n > 5)
+   var firstNum = numbers.First(n => n > 5);
    ```
 
 ### Select
