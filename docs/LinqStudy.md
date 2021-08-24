@@ -158,7 +158,7 @@ class Linq_Prac
    var q = 
        from p in students
        where p.City == "Redmond"
-       select c.First;
+       select p.First;
    ```
 
    
