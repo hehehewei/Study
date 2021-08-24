@@ -1,10 +1,10 @@
-# Linq学习
+## Linq学习
 
-## 什么是Linq
+### 什么是Linq
 
 ​	[微软官方文档](https://docs.microsoft.com/zh-cn/dotnet/csharp/programming-guide/concepts/linq/)
 
-## 查询操作的三个步骤
+### 查询操作的三个步骤
 
 1. #### 获取数据源
 
@@ -83,7 +83,7 @@ class Linq_Prac
    ```csharp
    var q =
        from p in students
-       select p.Last;
+       select p.Last; //Last为学生姓氏字段
    ```
 
    ==注意==
@@ -107,7 +107,7 @@ class Linq_Prac
        from p in students
        select new 
    	{
-       	p.First,
+       	p.First,  //First为学生名字字段
        	p.City
    	};
    ```
@@ -261,6 +261,8 @@ class Linq_Prac
 
 1. 内关联
 
+   单个关联条件
+
    查询有选课学生的选课信息
 
    ```csharp
@@ -275,7 +277,36 @@ class Linq_Prac
        };
    ```
 
-2. 左关联
+   多个关联条件
+
+   ```csharp
+   var queryResult = (from r1 in a.AsEnumerable()
+                      join r2 in b.AsEnumerable()
+                      on new
+                      {
+                          location_code = Convert.ToString(r1["location_code"]),
+                          inspection_code = Convert.ToString(r1["inspection_code"]),
+                          item_code = Convert.ToString(r1["item_code"])
+                      }
+                      equals new
+                      {
+                          location_code = Convert.ToString(r2["location_code"]),
+                          inspection_code = Convert.ToString(r2["inspection_code"]),
+                          item_code = Convert.ToString(r2["item_code"])
+                      }
+                      orderby Convert.ToString(r1["location_code"]), Convert.ToString(r2["item_code"])
+                      select new 
+                      {
+                          字段1 = Convert.ToString(r1["location_code"]),
+                          字段2 = Convert.ToString(r2["title"]),
+                          字段3 = Convert.ToString(r2["display_order"]),
+                          ///... = ....
+                      });
+   ```
+
+   
+
+2. 外关联
 
    查询所有学生的选课情况
 
@@ -289,7 +320,7 @@ class Linq_Prac
         select new
         {
             studentName = r1["sname"],
-            cID = tt == null ? "" : tt["cid"] //外联集合可能为null，所以需要判断
+            cID = (tt == null ? "" : tt["cid"]) //外联集合可能为null，所以需要判断
         };
    ```
 
@@ -334,6 +365,11 @@ class Linq_Prac
        select r;
    ```
 
+   ```csharp
+   var q = a.AsEnumerable()
+       .OrderByDescending(r["sage"])
+   ```
+
 4. ThenBy
 
    说明：使用复合的orderby进行排序
@@ -341,14 +377,14 @@ class Linq_Prac
    ```csharp
    var q =
        from r in a.AsEnumerable()
-       orderby r["sage"],r["ssex"]
+       orderby r["sage"] descending,r["ssex"]  descending
        select r;
    ```
 
    ```csharp
    var q = a.AsEnumerable()
-       	.OrderBy(r => r["sage"])
-       	.ThenBy(r => r["sex"]);
+       	.OrderByDescending(r => r["sage"])
+       	.ThenByDescending(r => r["sex"]);
    ```
 
    ==注意==：OrderBy不支持byte类型
@@ -363,41 +399,37 @@ class Linq_Prac
 
 1. 简单形式
 
-   将学生按男女进行分类
+   将学生按男女进行分类,并取出男女生人数
 
    ```csharp
    var q =
        from r in a.AsEnumerable()
        group r by r["ssex"] into g
-       select g;
-   ```
-
-   想要遍历所有信息需进行如下操作
-
-   ```c#
-   foreach (var p in q)
-   {
-       foreach (var h in p)
+       select new
        {
-           Console.WriteLine(h["sname"]+" "+h["ssex"]);
-       }
-   }
+           g.Key,
+           studentNum = g.Count()
+       };
    ```
 
-   若想遍历某个类别中所有记录需进行如下操作
+   将学生按性别和城市进行分类并统计人数
 
    ```csharp
-   foreach (var p in q)
-   {
-       if(Convert.ToString(p.Key) == "男")
-       {
-            foreach (var h in p)
-            {
-                Console.WriteLine(h["sname"]+" "+h["ssex"]);
-            }
-       }
-   }
+   var q = from r in students
+           group r by new
+           {
+               r.Sex,
+               r.City
+           } into g
+           select new
+           { 
+               sex  = g.Key.Sex,
+               city = g.Key.City,
+               num = g.Count()
+           };
    ```
+
+   
 
 2. where限制
 
@@ -409,9 +441,9 @@ class Linq_Prac
        group r by r["cid"] into g
        where g.Count() > 3
        select new
-   	{
-       	CID = g.Key
-   	};
+   	 {
+        	CID = g.Key
+   	 };
    ```
 
 3. 关联形式
@@ -470,7 +502,10 @@ class Linq_Prac
    var q =
        from r in a.AsEnumerable()
        where Convert.ToString(r["cid"]) == "01"
-       group r by new {score = Convert.ToInt32(r["score"]) > 60} into g
+       group r by new
+   				  {
+          score = Convert.ToInt32(r["score"]) > 60
+      } into g
        select g;
    ```
 
@@ -537,9 +572,9 @@ class Linq_Prac
 
    ```csharp
    var q =
-       (
+       (t
        	from p in students
-       	select p.Las
+       	select p.Last
    	)
        .Concat(
         	from p in teachers
@@ -640,17 +675,16 @@ class Linq_Prac
 
    ```csharp
    var q =
-       (
-       	from p in students
-       	where p.Scores.Any(p => p>90
-       ) 
-       select new
-       {
-           Name = p.First + " " + p.Last
-       }).Take(2);
+           (from p in students
+            where p.Scores.Any(p => p > 90)
+            orderby p.Scores.Count()
+            select new
+            {
+                Name = p.First + " " + p.Last
+            }).Take(2);
    ```
-
    
+
 
 #### Skip
 
@@ -747,9 +781,10 @@ class Linq_Prac
            select new
            {
                CourseID = g.Key,
-               MinScore = g.Min(p => Convert.ToDecimal(p["score"]))             };
+               MinScore = g.Min(p => Convert.ToDecimal(p["score"]))
+          };
    ```
-
+   
    
 
 #### Max
